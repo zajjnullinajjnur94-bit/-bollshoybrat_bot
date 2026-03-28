@@ -1,0 +1,26 @@
+[Unit]
+Description=TGCrypto Telegram bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tgcrypto/app
+EnvironmentFile=/opt/tgcrypto/app/.env
+ExecStart=/usr/bin/node /opt/tgcrypto/app/dist/index.js
+Restart=always
+RestartSec=3
+User=tgcrypto
+Group=tgcrypto
+Environment=NODE_ENV=production
+
+# Basic hardening (optional, but recommended)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/tgcrypto/app/data
+
+[Install]
+WantedBy=multi-user.target
+

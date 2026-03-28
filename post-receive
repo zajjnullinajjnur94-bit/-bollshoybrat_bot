@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Git bare repo hook: auto-deploy on push.
+# Assumes:
+# - bare repo at: /opt/tgcrypto/repo.git
+# - working tree at: /opt/tgcrypto/app
+# - systemd service: tgcrypto
+
+APP_DIR="/opt/tgcrypto/app"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+
+echo "[deploy] Updating working tree..."
+GIT_WORK_TREE="$APP_DIR" git checkout -f "$DEPLOY_BRANCH"
+
+echo "[deploy] Installing deps..."
+cd "$APP_DIR"
+npm ci
+
+echo "[deploy] Building..."
+npm run build
+
+echo "[deploy] Restarting service..."
+if [ "$(id -u)" -eq 0 ]; then
+  systemctl restart tgcrypto
+else
+  # For non-root deploy user: configure sudoers to allow this without a password:
+  #   tgcrypto ALL=NOPASSWD:/usr/bin/systemctl restart tgcrypto,/usr/bin/systemctl status tgcrypto
+  sudo -n systemctl restart tgcrypto
+fi
+
+echo "[deploy] Done."
+
